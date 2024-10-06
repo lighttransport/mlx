@@ -21,6 +21,7 @@ option(MLX_ENABLE_X64_MAC "Enable building for x64 macOS" OFF)
 option(MLX_BUILD_GGUF "Include support for GGUF format" ON)
 option(MLX_BUILD_SAFETENSORS "Include support for safetensors format" ON)
 option(MLX_METAL_JIT "Use JIT compilation for Metal kernels" OFF)
+option(MLX_BUILD_MPI "Include support for MPI" OFF)
 option(BUILD_SHARED_LIBS "Build mlx as a shared library" OFF)
 
 if(NOT MLX_VERSION)
@@ -136,50 +137,56 @@ if(MLX_BUILD_CPU)
       set(LAPACK_ROOT
           "${LAPACK_ROOT};$ENV{LAPACK_ROOT};/usr/local/opt/openblas")
     endif()
-    # Search and link with lapack.
-    find_package(LAPACK REQUIRED)
-    if(NOT LAPACK_FOUND)
-      message(FATAL_ERROR "Must have LAPACK installed")
-    endif()
-    find_path(LAPACK_INCLUDE_DIRS lapacke.h /usr/include /usr/local/include
-              /usr/local/opt/openblas/include)
-    message(STATUS "Lapack lib " ${LAPACK_LIBRARIES})
-    message(STATUS "Lapack include " ${LAPACK_INCLUDE_DIRS})
-    target_include_directories(mlx PRIVATE ${LAPACK_INCLUDE_DIRS})
-    target_link_libraries(mlx PUBLIC ${LAPACK_LIBRARIES})
-    # List blas after lapack otherwise we may accidentally incldue an old
-    # version of lapack.h from the include dirs of blas.
-    find_package(BLAS REQUIRED)
-    if(NOT BLAS_FOUND)
-      message(FATAL_ERROR "Must have BLAS installed")
-    endif()
-    # TODO find a cleaner way to do this
-    find_path(BLAS_INCLUDE_DIRS cblas.h /usr/include /usr/local/include
-              $ENV{BLAS_HOME}/include)
-    message(STATUS "Blas lib " ${BLAS_LIBRARIES})
-    message(STATUS "Blas include " ${BLAS_INCLUDE_DIRS})
-    target_include_directories(mlx PRIVATE ${BLAS_INCLUDE_DIRS})
-    target_link_libraries(mlx PUBLIC ${BLAS_LIBRARIES})
+
+    # LTE: Disable lapack and blas
+    #
+    ## Search and link with lapack.
+    #find_package(LAPACK REQUIRED)
+    #if(NOT LAPACK_FOUND)
+    #  message(FATAL_ERROR "Must have LAPACK installed")
+    #endif()
+    #find_path(LAPACK_INCLUDE_DIRS lapacke.h /usr/include /usr/local/include
+    #          /usr/local/opt/openblas/include)
+    #message(STATUS "Lapack lib " ${LAPACK_LIBRARIES})
+    #message(STATUS "Lapack include " ${LAPACK_INCLUDE_DIRS})
+    #target_include_directories(mlx PRIVATE ${LAPACK_INCLUDE_DIRS})
+    #target_link_libraries(mlx PUBLIC ${LAPACK_LIBRARIES})
+    ## List blas after lapack otherwise we may accidentally incldue an old
+    ## version of lapack.h from the include dirs of blas.
+    #find_package(BLAS REQUIRED)
+    #if(NOT BLAS_FOUND)
+    #  message(FATAL_ERROR "Must have BLAS installed")
+    #endif()
+    ## TODO find a cleaner way to do this
+    #find_path(BLAS_INCLUDE_DIRS cblas.h /usr/include /usr/local/include
+    #          $ENV{BLAS_HOME}/include)
+    #message(STATUS "Blas lib " ${BLAS_LIBRARIES})
+    #message(STATUS "Blas include " ${BLAS_INCLUDE_DIRS})
+    #target_include_directories(mlx PRIVATE ${BLAS_INCLUDE_DIRS})
+    #target_link_libraries(mlx PUBLIC ${BLAS_LIBRARIES})
   endif()
 else()
   set(MLX_BUILD_ACCELERATE OFF)
 endif()
 
-find_package(MPI)
-if(MPI_FOUND)
-  execute_process(
-    COMMAND zsh "-c" "mpirun --version"
-    OUTPUT_VARIABLE MPI_VERSION
-    ERROR_QUIET)
-  if(${MPI_VERSION} MATCHES ".*Open MPI.*")
-    target_include_directories(mlx PRIVATE ${MPI_INCLUDE_PATH})
-  elseif(MPI_VERSION STREQUAL "")
-    set(MPI_FOUND FALSE)
-    message(
-      WARNING "MPI found but mpirun is not available. Building without MPI.")
-  else()
-    set(MPI_FOUND FALSE)
-    message(WARNING "MPI which is not OpenMPI found. Building without MPI.")
+set(MPI_FOUND FALSE)
+if (MLX_BUILD_MPI)
+  find_package(MPI)
+  if(MPI_FOUND)
+    execute_process(
+      COMMAND zsh "-c" "mpirun --version"
+      OUTPUT_VARIABLE MPI_VERSION
+      ERROR_QUIET)
+    if(${MPI_VERSION} MATCHES ".*Open MPI.*")
+      target_include_directories(mlx PRIVATE ${MPI_INCLUDE_PATH})
+    elseif(MPI_VERSION STREQUAL "")
+      set(MPI_FOUND FALSE)
+      message(
+        WARNING "MPI found but mpirun is not available. Building without MPI.")
+    else()
+      set(MPI_FOUND FALSE)
+      message(WARNING "MPI which is not OpenMPI found. Building without MPI.")
+    endif()
   endif()
 endif()
 
