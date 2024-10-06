@@ -6,7 +6,9 @@
 #ifdef ACCELERATE_NEW_LAPACK
 #include <Accelerate/Accelerate.h>
 #else
+#if defined(MLX_USE_CBLAS)
 #include <cblas.h>
+#endif
 #endif
 
 #include "mlx/backend/common/copy.h"
@@ -680,6 +682,7 @@ void dispatch_slow_conv_3D(
   }
 }
 
+#if defined(MLX_USE_CBLAS)
 ///////////////////////////////////////////////////////////////////////////////
 // Explicit gemm conv
 ///////////////////////////////////////////////////////////////////////////////
@@ -1063,6 +1066,7 @@ void explicit_gemm_conv_ND_cpu(
     copy(gemm_out, out, CopyType::Vector);
   }
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Conv routing
@@ -1078,6 +1082,7 @@ void conv_1D_cpu(
     const std::vector<int>& in_dilation,
     bool flip) {
   const int groups = in.shape().back() / wt.shape().back();
+#if defined(MLX_USE_CBLAS)
   if (wt_dilation[0] == 1 && in_dilation[0] == 1 && !flip) {
     return explicit_gemm_conv_1D_cpu(
         in, wt, out, padding, wt_strides, wt_dilation);
@@ -1086,6 +1091,7 @@ void conv_1D_cpu(
     return explicit_gemm_conv_ND_cpu(
         in, wt, out, padding, wt_strides, wt_dilation, flip);
   }
+#endif
 
   return dispatch_slow_conv_1D(
       in, wt, out, padding, wt_strides, wt_dilation, in_dilation, flip);
@@ -1101,11 +1107,13 @@ void conv_2D_cpu(
     const std::vector<int>& in_dilation,
     bool flip) {
   const int groups = in.shape().back() / wt.shape().back();
+#if defined(MLX_USE_CBLAS)
   if (wt_dilation[0] == 1 && wt_dilation[1] == 1 && in_dilation[0] == 1 &&
       in_dilation[1] == 1 && groups == 1) {
     return explicit_gemm_conv_ND_cpu(
         in, wt, out, padding, wt_strides, wt_dilation, flip);
   }
+#endif
 
   return dispatch_slow_conv_2D(
       in, wt, out, padding, wt_strides, wt_dilation, in_dilation, flip);
@@ -1121,12 +1129,14 @@ void conv_3D_cpu(
     const std::vector<int>& in_dilation,
     bool flip) {
   const int groups = in.shape().back() / wt.shape().back();
+#if defined(MLX_USE_CBLAS)
   if (wt_dilation[0] == 1 && wt_dilation[1] == 1 && wt_dilation[2] == 1 &&
       in_dilation[0] == 1 && in_dilation[1] == 1 && in_dilation[2] == 1 &&
       groups == 1) {
     return explicit_gemm_conv_ND_cpu(
         in, wt, out, padding, wt_strides, wt_dilation, flip);
   }
+#endif
 
   return dispatch_slow_conv_3D(
       in, wt, out, padding, wt_strides, wt_dilation, in_dilation, flip);

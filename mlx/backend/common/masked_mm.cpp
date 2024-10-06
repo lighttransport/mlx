@@ -3,7 +3,9 @@
 #ifdef ACCELERATE_NEW_LAPACK
 #include <Accelerate/Accelerate.h>
 #else
+#if defined(MLX_USE_CBLAS)
 #include <cblas.h>
+#endif
 #endif
 
 #include <cstring>
@@ -59,6 +61,7 @@ inline void mask_matrix(
 } // namespace
 
 void BlockMaskedMM::eval(const std::vector<array>& inputs, array& out) {
+#if defined(MLX_USE_CBLAS)
   if (out.dtype() != float32) {
     throw std::runtime_error(
         "[BlockMaskedMM::eval] Currently only supports float32.");
@@ -213,9 +216,14 @@ void BlockMaskedMM::eval(const std::vector<array>& inputs, array& out) {
       mask_array(inputs[2], ci, block_size_, i, M, N, N, 1);
     }
   }
+#else
+    throw std::runtime_error(
+        "[BlockMaskedMM::eval] Not supported in this build.");
+#endif
 }
 
 void GatherMM::eval(const std::vector<array>& inputs, array& out) {
+#if defined(MLX_USE_CBLAS)
   if (out.dtype() != float32) {
     throw std::runtime_error(
         "[GatherMM::eval] Currently only supports float32.");
@@ -300,6 +308,10 @@ void GatherMM::eval(const std::vector<array>& inputs, array& out) {
         out.shape(-1) // ldc
     );
   }
+#else
+    throw std::runtime_error(
+        "[GatherMM::eval] Not supported in this build.");
+#endif
 }
 
 } // namespace mlx::core

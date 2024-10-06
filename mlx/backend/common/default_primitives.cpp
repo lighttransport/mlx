@@ -3,7 +3,12 @@
 #ifdef ACCELERATE_NEW_LAPACK
 #include <Accelerate/Accelerate.h>
 #else
+#if defined(MLX_USE_CBLAS)
 #include <cblas.h>
+#else
+#include "nanoblas.h"
+#endif
+#endif
 #endif
 #include <cstring>
 
