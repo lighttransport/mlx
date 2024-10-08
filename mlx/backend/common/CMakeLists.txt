@@ -47,12 +47,16 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/threefry.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/indexing.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/load.cpp
-          #${CMAKE_CURRENT_SOURCE_DIR}/qrf.cpp
-          #${CMAKE_CURRENT_SOURCE_DIR}/svd.cpp
-          #${CMAKE_CURRENT_SOURCE_DIR}/inverse.cpp
-          #${CMAKE_CURRENT_SOURCE_DIR}/cholesky.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/qrf.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/svd.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/inverse.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/cholesky.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
           ${CMAKE_CURRENT_BINARY_DIR}/compiled_preamble.cpp)
+
+if(NOT MLX_USE_CBLAS)
+  target_sources(mlx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sgemm.cc)
+endif()
 
 if(IOS)
   target_sources(mlx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/compiled_nocpu.cpp)

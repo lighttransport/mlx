@@ -5,6 +5,8 @@
 #else
 #if defined(MLX_USE_CBLAS)
 #include <cblas.h>
+#else
+#include "nanocblas.hh"
 #endif
 #endif
 
@@ -217,13 +219,12 @@ void BlockMaskedMM::eval(const std::vector<array>& inputs, array& out) {
     }
   }
 #else
-    throw std::runtime_error(
-        "[BlockMaskedMM::eval] Not supported in this build.");
+  throw std::runtime_error(
+      "[BlockMaskedMM::eval] Not supported in this build.");
 #endif
 }
 
 void GatherMM::eval(const std::vector<array>& inputs, array& out) {
-#if defined(MLX_USE_CBLAS)
   if (out.dtype() != float32) {
     throw std::runtime_error(
         "[GatherMM::eval] Currently only supports float32.");
@@ -291,6 +292,7 @@ void GatherMM::eval(const std::vector<array>& inputs, array& out) {
     uint32_t indx_A = lhs_indices_ptr[elem_to_loc(i, lhs_indices)];
     uint32_t indx_B = rhs_indices_ptr[elem_to_loc(i, rhs_indices)];
 
+#if defined(MLX_USE_CBLAS)
     cblas_sgemm(
         CblasRowMajor,
         a_transposed ? CblasTrans : CblasNoTrans, // transA
@@ -307,11 +309,24 @@ void GatherMM::eval(const std::vector<array>& inputs, array& out) {
         out.data<float>() + matrix_stride_out * i,
         out.shape(-1) // ldc
     );
-  }
 #else
-    throw std::runtime_error(
-        "[GatherMM::eval] Not supported in this build.");
+    nanocblas::sgemm(
+        a_transposed,
+        b_transposed,
+        M,
+        N,
+        K,
+        1.0f, // alpha
+        a.data<float>() + elem_to_loc(indx_A, batch_shape_A, batch_strides_A),
+        lda,
+        b.data<float>() + elem_to_loc(indx_B, batch_shape_B, batch_strides_B),
+        ldb,
+        0.0f, // beta
+        out.data<float>() + matrix_stride_out * i,
+        out.shape(-1) // ldc
+    );
 #endif
+  }
 }
 
 } // namespace mlx::core

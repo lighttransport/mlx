@@ -8,6 +8,11 @@
 #else
 #if defined(MLX_USE_CBLAS)
 #include <cblas.h>
+#else
+#include "nanocblas.hh"
+
+// nanocblas' gemm is not optimzied yet, so use slow conv for a while.
+#define USE_SLOW_CONV
 #endif
 #endif
 
@@ -682,7 +687,6 @@ void dispatch_slow_conv_3D(
   }
 }
 
-#if defined(MLX_USE_CBLAS)
 ///////////////////////////////////////////////////////////////////////////////
 // Explicit gemm conv
 ///////////////////////////////////////////////////////////////////////////////
@@ -806,6 +810,7 @@ void explicit_gemm_conv_1D_cpu(
   }
 
   for (int g = 0; g < groups; ++g) {
+#if defined(MLX_USE_CBLAS)
     // Perform gemm
     cblas_sgemm(
         CblasRowMajor,
@@ -823,6 +828,23 @@ void explicit_gemm_conv_1D_cpu(
         gemm_out.data<float>() + g * O_per_group, // C
         O // ldc
     );
+#else
+    nanocblas::sgemm(
+        false, // no trans A
+        true, // transB
+        strided_reshape[0], // M
+        O_per_group, // N
+        C_per_group * wH, // K
+        1.0f, // alpha
+        in_strided.data<float>() + g * C_per_group * wH, // A
+        wH * C, // lda
+        gemm_wt.data<float>() + g * O_per_group * C_per_group * wH, // B
+        wH * C_per_group, // ldb
+        0.0f, // beta
+        gemm_out.data<float>() + g * O_per_group, // C
+        O // ldc
+    );
+#endif
 
     // Copy results if needed
     if (out.dtype() != float32) {
@@ -910,6 +932,7 @@ void explicit_gemm_conv_2D_cpu(
   }
 
   // Perform gemm
+#if defined(MLX_USE_CBLAS)
   cblas_sgemm(
       CblasRowMajor,
       CblasNoTrans, // no trans A
@@ -926,6 +949,23 @@ void explicit_gemm_conv_2D_cpu(
       gemm_out.data<float>(),
       O // ldc
   );
+#else
+  nanocblas::sgemm(
+      false, // no trans A
+      true, // transB
+      strided_reshape[0], // M
+      O, // N
+      strided_reshape[1], // K
+      1.0f, // alpha
+      in_strided.data<float>(),
+      strided_reshape[1], // lda
+      gemm_wt.data<float>(),
+      strided_reshape[1], // ldb
+      0.0f, // beta
+      gemm_out.data<float>(),
+      O // ldc
+  );
+#endif
 
   // Copy results if needed
   if (out.dtype() != float32) {
@@ -1044,6 +1084,7 @@ void explicit_gemm_conv_ND_cpu(
   }
 
   // Perform gemm
+#if defined(MLX_USE_CBLAS)
   cblas_sgemm(
       CblasRowMajor,
       CblasNoTrans, // no trans A
@@ -1060,13 +1101,29 @@ void explicit_gemm_conv_ND_cpu(
       gemm_out.data<float>(),
       O // ldc
   );
+#else
+  nanocblas::sgemm(
+      false, // no trans A
+      true, // transB
+      strided_reshape[0], // M
+      O, // N
+      strided_reshape[1], // K
+      1.0f, // alpha
+      in_strided.data<float>(),
+      strided_reshape[1], // lda
+      gemm_wt.data<float>(),
+      strided_reshape[1], // ldb
+      0.0f, // beta
+      gemm_out.data<float>(),
+      O // ldc
+  );
+#endif
 
   // Copy results if needed
   if (out.dtype() != float32) {
     copy(gemm_out, out, CopyType::Vector);
   }
 }
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Conv routing
@@ -1082,7 +1139,7 @@ void conv_1D_cpu(
     const std::vector<int>& in_dilation,
     bool flip) {
   const int groups = in.shape().back() / wt.shape().back();
-#if defined(MLX_USE_CBLAS)
+#if !defined(USE_SLOW_CONV)
   if (wt_dilation[0] == 1 && in_dilation[0] == 1 && !flip) {
     return explicit_gemm_conv_1D_cpu(
         in, wt, out, padding, wt_strides, wt_dilation);
@@ -1107,7 +1164,7 @@ void conv_2D_cpu(
     const std::vector<int>& in_dilation,
     bool flip) {
   const int groups = in.shape().back() / wt.shape().back();
-#if defined(MLX_USE_CBLAS)
+#if !defined(USE_SLOW_CONV)
   if (wt_dilation[0] == 1 && wt_dilation[1] == 1 && in_dilation[0] == 1 &&
       in_dilation[1] == 1 && groups == 1) {
     return explicit_gemm_conv_ND_cpu(
@@ -1129,7 +1186,7 @@ void conv_3D_cpu(
     const std::vector<int>& in_dilation,
     bool flip) {
   const int groups = in.shape().back() / wt.shape().back();
-#if defined(MLX_USE_CBLAS)
+#if !defined(USE_SLOW_CONV)
   if (wt_dilation[0] == 1 && wt_dilation[1] == 1 && wt_dilation[2] == 1 &&
       in_dilation[0] == 1 && in_dilation[1] == 1 && in_dilation[2] == 1 &&
       groups == 1) {

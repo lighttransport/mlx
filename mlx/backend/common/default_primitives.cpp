@@ -6,8 +6,7 @@
 #if defined(MLX_USE_CBLAS)
 #include <cblas.h>
 #else
-#include "nanoblas.h"
-#endif
+#include "nanocblas.hh"
 #endif
 #endif
 #include <cstring>
@@ -157,6 +156,7 @@ inline void matmul_common_general(
   }
 
   for (int i = 0; i < (a.size() / (M * K)); ++i) {
+#if defined(MLX_USE_CBLAS)
     cblas_sgemm(
         CblasRowMajor,
         a_transposed ? CblasTrans : CblasNoTrans, // transA
@@ -173,6 +173,23 @@ inline void matmul_common_general(
         out.data<float>() + M * N * i,
         out.shape(-1) // ldc
     );
+#else
+    nanocblas::sgemm(
+        a_transposed, // transA
+        b_transposed, // transB
+        M,
+        N,
+        K,
+        alpha, // alpha
+        a.data<float>() + elem_to_loc(M * K * i, a.shape(), a.strides()),
+        lda,
+        b.data<float>() + elem_to_loc(K * N * i, b.shape(), b.strides()),
+        ldb,
+        beta, // beta
+        out.data<float>() + M * N * i,
+        out.shape(-1) // ldc
+    );
+#endif
   }
 }
 
