@@ -7,11 +7,16 @@
 #ifdef ACCELERATE_NEW_LAPACK
 #include <Accelerate/Accelerate.h>
 #else
+#if defined(MLX_USE_CBLAS)
 #include <lapack.h>
+#else
+#include "nanolapack.hh"
+#endif
 #endif
 
 namespace mlx::core {
 
+#if defined(MLX_USE_CBLAS)
 template <typename T>
 struct lpack;
 
@@ -142,12 +147,17 @@ void qrf_impl(const array& a, array& q, array& r) {
   allocator::free(work);
   allocator::free(tau);
 }
+#endif
 
 void QRF::eval(const std::vector<array>& inputs, std::vector<array>& outputs) {
   if (!(inputs[0].dtype() == float32)) {
     throw std::runtime_error("[QRF::eval] only supports float32.");
   }
+#if defined(MLX_USE_CBLAS)
   qrf_impl<float>(inputs[0], outputs[0], outputs[1]);
+#else
+  throw std::runtime_error("[QRF::eval] TODO: Implement QRF using nanolapack.");
+#endif
 }
 
 } // namespace mlx::core

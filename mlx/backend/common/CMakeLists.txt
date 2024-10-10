@@ -54,6 +54,10 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
           ${CMAKE_CURRENT_BINARY_DIR}/compiled_preamble.cpp)
 
+if(NOT MLX_USE_CBLAS)
+  target_sources(mlx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sgemm.cc)
+endif()
+
 if(IOS)
   target_sources(mlx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/compiled_nocpu.cpp)
 else()

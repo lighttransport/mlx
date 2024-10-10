@@ -3,7 +3,11 @@
 #ifdef ACCELERATE_NEW_LAPACK
 #include <Accelerate/Accelerate.h>
 #else
+#if defined(MLX_USE_CBLAS)
 #include <cblas.h>
+#else
+#include "nanocblas.hh"
+#endif
 #endif
 
 #include <cstring>
@@ -59,6 +63,7 @@ inline void mask_matrix(
 } // namespace
 
 void BlockMaskedMM::eval(const std::vector<array>& inputs, array& out) {
+#if defined(MLX_USE_CBLAS)
   if (out.dtype() != float32) {
     throw std::runtime_error(
         "[BlockMaskedMM::eval] Currently only supports float32.");
@@ -213,6 +218,10 @@ void BlockMaskedMM::eval(const std::vector<array>& inputs, array& out) {
       mask_array(inputs[2], ci, block_size_, i, M, N, N, 1);
     }
   }
+#else
+  throw std::runtime_error(
+      "[BlockMaskedMM::eval] Not supported in this build.");
+#endif
 }
 
 void GatherMM::eval(const std::vector<array>& inputs, array& out) {
@@ -283,6 +292,7 @@ void GatherMM::eval(const std::vector<array>& inputs, array& out) {
     uint32_t indx_A = lhs_indices_ptr[elem_to_loc(i, lhs_indices)];
     uint32_t indx_B = rhs_indices_ptr[elem_to_loc(i, rhs_indices)];
 
+#if defined(MLX_USE_CBLAS)
     cblas_sgemm(
         CblasRowMajor,
         a_transposed ? CblasTrans : CblasNoTrans, // transA
@@ -299,6 +309,23 @@ void GatherMM::eval(const std::vector<array>& inputs, array& out) {
         out.data<float>() + matrix_stride_out * i,
         out.shape(-1) // ldc
     );
+#else
+    nanocblas::sgemm(
+        a_transposed,
+        b_transposed,
+        M,
+        N,
+        K,
+        1.0f, // alpha
+        a.data<float>() + elem_to_loc(indx_A, batch_shape_A, batch_strides_A),
+        lda,
+        b.data<float>() + elem_to_loc(indx_B, batch_shape_B, batch_strides_B),
+        ldb,
+        0.0f, // beta
+        out.data<float>() + matrix_stride_out * i,
+        out.shape(-1) // ldc
+    );
+#endif
   }
 }
 

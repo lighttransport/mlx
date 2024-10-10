@@ -1,3 +1,10 @@
+# MLX fork by LTE
+
+We don't need the following feature, so dsiabled.
+
+* Disable Lapack and BLAS: Disabled qr, svd, cholesky and inverse.
+* Make MPI optional
+
 # MLX
 
 [**Quickstart**](#quickstart) | [**Installation**](#installation) |
