@@ -55,7 +55,11 @@ target_sources(
           ${CMAKE_CURRENT_BINARY_DIR}/compiled_preamble.cpp)
 
 if(NOT MLX_USE_CBLAS)
-  target_sources(mlx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sgemm.cc)
+  target_sources(
+    mlx PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/sgemm.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/nanolapack.cc
+   )
 endif()
 
 if(IOS)
