@@ -5,6 +5,22 @@ else()
   set(COMPILER ${CMAKE_CXX_COMPILER})
 endif()
 
+if (WIN32)
+# TODO
+add_custom_command(
+  OUTPUT compiled_preamble.cpp
+  COMMAND
+    ${CMAKE_CURRENT_SOURCE_DIR}/make_compiled_preamble.bat
+    ${CMAKE_CURRENT_BINARY_DIR}/compiled_preamble.cpp ${COMPILER}
+    ${PROJECT_SOURCE_DIR} ${CLANG}
+  DEPENDS make_compiled_preamble.bat
+          compiled_preamble.h
+          ${PROJECT_SOURCE_DIR}/mlx/types/half_types.h
+          ${PROJECT_SOURCE_DIR}/mlx/types/fp16.h
+          ${PROJECT_SOURCE_DIR}/mlx/types/bf16.h
+          ${PROJECT_SOURCE_DIR}/mlx/types/complex.h
+          ops.h)
+else()
 add_custom_command(
   OUTPUT compiled_preamble.cpp
   COMMAND
@@ -22,6 +38,7 @@ add_custom_command(
 add_custom_target(cpu_compiled_preamble DEPENDS compiled_preamble.cpp)
 
 add_dependencies(mlx cpu_compiled_preamble)
+endif()
 
 target_sources(
   mlx
@@ -52,7 +69,15 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/inverse.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/cholesky.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
-          ${CMAKE_CURRENT_BINARY_DIR}/compiled_preamble.cpp)
+          )
+
+if (WIN32)
+else()
+target_sources(
+  mlx
+  PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/compiled_preamble.cpp
+)
+endif()
 
 if(NOT MLX_USE_CBLAS)
   target_sources(

@@ -11,7 +11,8 @@
 using namespace mlx::core;
 
 std::string get_temp_file(const std::string& name) {
-  return std::filesystem::temp_directory_path().append(name);
+  auto tmppath = std::filesystem::temp_directory_path().append(name);
+  return tmppath.string();
 }
 
 TEST_CASE("test save_safetensors") {

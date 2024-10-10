@@ -12,6 +12,11 @@
 
 using namespace mlx::core;
 
+#ifdef _WIN32
+#define M_2_SQRTPI 	1.12837916709551257390
+#define M_SQRT2 1.41421356237309504880
+#endif
+
 TEST_CASE("test stop gradient") {
   auto x = zeros({5, 5});
   auto y = stop_gradient(x);

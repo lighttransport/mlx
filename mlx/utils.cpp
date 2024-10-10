@@ -151,7 +151,7 @@ std::ostream& operator<<(std::ostream& os, int8_t x) {
 }
 
 std::ostream& operator<<(std::ostream& os, uint8_t x) {
-  os << static_cast<uint>(x);
+  os << static_cast<uint32_t>(x);
   return os;
 }
 

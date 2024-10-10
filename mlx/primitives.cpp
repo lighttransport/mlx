@@ -14,6 +14,11 @@
 #include "mlx/primitives.h"
 #include "mlx/utils.h"
 
+#ifdef _MSC_VER
+#define M_2_SQRTPI 1.12837916709551257390
+#endif
+
+
 namespace mlx::core {
 
 namespace {

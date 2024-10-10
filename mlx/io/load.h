@@ -4,7 +4,12 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <io.h>
+#include <stdlib.h>
+#else
 #include <unistd.h>
+#endif
 #include <memory>
 #include <sstream>
 
