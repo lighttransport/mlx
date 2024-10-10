@@ -2,8 +2,19 @@
 
 We don't need the following feature, so dsiabled.
 
-* Disable Lapack and BLAS: Disabled qr, svd, cholesky and inverse.
+* Disable Lapack and BLAS.
+  * Use nanocblas/nanolapack by default.
 * Make MPI optional
+
+## TODO
+
+* [ ] Use Win32 mmap API on Windows(MSVC)
+* [ ] Use Win32 dlopen API on Windows(MSVC)
+* [ ] Generate preamble code on Windows(MSVC)
+
+## Note on Win32 build
+
+Win32 build passes, but may not work yet. 
 
 # MLX
 
