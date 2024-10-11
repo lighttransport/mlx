@@ -7,6 +7,7 @@
 
 namespace mlx::core {
 
+#if defined(MLX_USE_BLAS)
 void svd_impl(const array& a, array& u, array& s, array& vt) {
   // Lapack uses the column-major convention. To avoid having to transpose
   // the input and then transpose the outputs, we swap the indices/sizes of the
@@ -136,12 +137,17 @@ void svd_impl(const array& a, array& u, array& s, array& vt) {
     }
   }
 }
+#endif
 
 void SVD::eval(const std::vector<array>& inputs, std::vector<array>& outputs) {
   if (!(inputs[0].dtype() == float32)) {
     throw std::runtime_error("[SVD::eval] only supports float32.");
   }
+#if defined(MLX_USE_BLAS)
   svd_impl(inputs[0], outputs[0], outputs[1], outputs[2]);
+#else
+  throw std::runtime_error("[SVD::eval] TODO.");
+#endif
 }
 
 } // namespace mlx::core

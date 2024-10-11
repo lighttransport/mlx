@@ -7,6 +7,10 @@
 
 using namespace mlx::core;
 
+#ifdef _WIN32
+#define M_SQRT2 1.41421356237309504880
+#endif
+
 std::vector<array> simple_fun(const std::vector<array>& inputs) {
   return std::vector<array>{inputs[0] + inputs[1]};
 }

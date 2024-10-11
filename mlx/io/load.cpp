@@ -325,6 +325,10 @@ void ParallelFileReader::read(char* data, size_t n) {
 
 void ParallelFileReader::read(char* data, size_t n, size_t offset) {
   auto readfn = [fd = fd_](size_t offset, size_t size, char* buffer) -> bool {
+#ifdef _WIN32
+    // TODO: pread
+    return false;
+#else
     while (size != 0) {
       auto m = pread(fd, buffer, size, offset);
       if (m <= 0) {
@@ -334,6 +338,7 @@ void ParallelFileReader::read(char* data, size_t n, size_t offset) {
       size -= m;
     }
     return true;
+#endif
   };
   std::vector<std::future<bool>> futs;
   while (n != 0) {

@@ -7,14 +7,17 @@
 
 #ifdef ACCELERATE_NEW_LAPACK
 #include <Accelerate/Accelerate.h>
-#else
+#elif defined(MLX_USE_BLAS)
 #include <lapack.h>
+#else
+#include "nanolapack.hh"
 #endif
 
 namespace mlx::core {
 
 namespace {
 
+#if defined(MLX_USE_BLAS)
 // Delegate to the Cholesky factorization taking into account differences in
 // LAPACK implementations (basically how to pass the 'uplo' string to fortran).
 int spotrf_wrapper(char uplo, float* matrix, int N) {
@@ -39,9 +42,11 @@ int spotrf_wrapper(char uplo, float* matrix, int N) {
 
   return info;
 }
+#endif
 
 } // namespace
 
+#if defined(MLX_USE_BLAS)
 void cholesky_impl(const array& a, array& factor, bool upper) {
   // Lapack uses the column-major convention. We take advantage of the fact that
   // the matrix should be symmetric:
@@ -90,12 +95,17 @@ void cholesky_impl(const array& a, array& factor, bool upper) {
     }
   }
 }
+#endif
 
 void Cholesky::eval(const std::vector<array>& inputs, array& output) {
   if (inputs[0].dtype() != float32) {
     throw std::runtime_error("[Cholesky::eval] only supports float32.");
   }
+#if defined(MLX_USE_BLAS)
   cholesky_impl(inputs[0], output, upper_);
+#else
+  throw std::runtime_error("[Cholesky::eval] TODO.");
+#endif
 }
 
 } // namespace mlx::core

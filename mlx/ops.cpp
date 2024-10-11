@@ -12,6 +12,10 @@
 #include "mlx/transforms.h"
 #include "mlx/utils.h"
 
+#ifdef _MSC_VER
+#define M_PI 	3.14159265358979323846
+#endif
+
 namespace mlx::core {
 
 namespace {
@@ -831,7 +835,7 @@ std::vector<array> meshgrid(
     outputs.push_back(reshape(arrays[i], std::move(shape), s));
   }
 
-  if (indexing == "xy" and ndim > 1) {
+  if (indexing == "xy" && ndim > 1) {
     std::vector<int> shape(ndim, 1);
 
     shape[1] = arrays[0].size();

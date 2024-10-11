@@ -112,9 +112,9 @@ SafetensorsLoad load_safetensors(
         "[load_safetensors] Invalid json header length " + in_stream->label());
   }
   // Load the json metadata
-  char rawJson[jsonHeaderLength];
-  in_stream->read(rawJson, jsonHeaderLength);
-  auto metadata = json::parse(rawJson, rawJson + jsonHeaderLength);
+  std::vector<char> rawJson(jsonHeaderLength);
+  in_stream->read(rawJson.data(), jsonHeaderLength);
+  auto metadata = json::parse(rawJson.data(), rawJson.data() + jsonHeaderLength);
   // Should always be an object on the top-level
   if (!metadata.is_object()) {
     throw std::runtime_error(

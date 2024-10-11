@@ -4,7 +4,7 @@
 
 #ifdef ACCELERATE_NEW_LAPACK
 #include <Accelerate/Accelerate.h>
-#else
+#elif defined(MLX_USE_BLAS)
 #include <lapack.h>
 #endif
 

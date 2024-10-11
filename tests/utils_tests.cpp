@@ -1,5 +1,10 @@
 // Copyright © 2023 Apple Inc.
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 #include "doctest/doctest.h"
 
 #include "mlx/mlx.h"

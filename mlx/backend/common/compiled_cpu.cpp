@@ -1,6 +1,8 @@
 // Copyright © 2023-2024 Apple Inc.
 
+#if !defined(_WIN32)
 #include <dlfcn.h>
+#endif
 #include <filesystem>
 #include <fstream>
 #include <list>
@@ -21,7 +23,8 @@ bool compile_available_for_device(const Device& device) {
 } // namespace detail
 
 std::string get_temp_file(const std::string& name) {
-  return std::filesystem::temp_directory_path().append(name);
+  auto tmppath = std::filesystem::temp_directory_path().append(name);
+  return tmppath.string();
 }
 
 // Return a pointer to a compiled function
@@ -30,16 +33,24 @@ void* compile(
     const std::string& source_code = "") {
   struct DLib {
     DLib(const std::string& libname) {
+#ifdef _WIN32
+      // TODO
+      lib = nullptr;
+#else
       lib = dlopen(libname.c_str(), RTLD_NOW);
       if (!lib) {
         std::ostringstream msg;
         msg << "Could not load C++ shared library " << dlerror();
         throw std::runtime_error(msg.str());
       }
+#endif
     }
 
     ~DLib() {
+#ifdef _WIN32
+#else
       dlclose(lib);
+#endif
     }
     void* lib;
   };
@@ -106,6 +117,15 @@ void* compile(
   libs.emplace_back(shared_lib_path);
 
   // Load function
+#ifdef _WIN32
+  void* fun = nullptr; // TODO
+  if (!fun) {
+    std::ostringstream msg;
+    msg << "[Compile::eval_cpu] TODO "
+        << kernel_name << std::endl;
+    throw std::runtime_error(msg.str());
+  }
+#else
   void* fun = dlsym(libs.back().lib, kernel_name.c_str());
   if (!fun) {
     std::ostringstream msg;
@@ -114,6 +134,7 @@ void* compile(
         << dlerror();
     throw std::runtime_error(msg.str());
   }
+#endif
   kernels.insert({kernel_name, fun});
   return fun;
 }
@@ -260,6 +281,9 @@ inline void build_kernel(
 void Compiled::eval_cpu(
     const std::vector<array>& inputs,
     std::vector<array>& outputs) {
+#ifdef WIN32
+  throw std::runtime_error("[Compiled:eval_cpu] TODO");
+#else
   if (kernel_lib_.empty()) {
     kernel_lib_ = build_lib_name(inputs_, outputs_, tape_, constant_ids_);
   }
@@ -352,6 +376,7 @@ void Compiled::eval_cpu(
   }
   auto fun = (void (*)(void**))fn_ptr;
   fun(args.data());
+#endif
 }
 
 } // namespace mlx::core

@@ -6,10 +6,16 @@
 
 #ifdef ACCELERATE_NEW_LAPACK
 #include <Accelerate/Accelerate.h>
-#else
+#elif defined(MLX_USE_BLAS)
 #include <lapack.h>
+#else
+#ifndef NANOCBLAS_LAPACK
+#define NANOCBLAS_LAPACK
+#endif
+#include "nanolapack.hh"
 #endif
 
+#if defined(MLX_USE_BLAS)
 // Wrapper to account for differences in
 // LAPACK implementations (basically how to pass the 'uplo' string to fortran).
 int strtri_wrapper(char uplo, char diag, float* matrix, int N) {
@@ -37,9 +43,11 @@ int strtri_wrapper(char uplo, char diag, float* matrix, int N) {
 
   return info;
 }
+#endif
 
 namespace mlx::core {
 
+#if defined(MLX_USE_BLAS)
 void general_inv(array& inv, int N, int i) {
   int info;
   auto ipiv = array::Data{allocator::malloc_or_wait(sizeof(int) * N)};
@@ -108,8 +116,10 @@ void tri_inv(array& inv, int N, int i, bool upper) {
     throw std::runtime_error(ss.str());
   }
 }
+#endif
 
 void inverse_impl(const array& a, array& inv, bool tri, bool upper) {
+#if defined(MLX_USE_BLAS)
   // Lapack uses the column-major convention. We take advantage of the following
   // identity to avoid transposing (see
   // https://math.stackexchange.com/a/340234):
@@ -128,6 +138,14 @@ void inverse_impl(const array& a, array& inv, bool tri, bool upper) {
       general_inv(inv, N, i);
     }
   }
+#else
+  const int N = a.shape(-1);
+  const size_t num_matrices = a.size() / (N * N);
+
+  for (int i = 0; i < num_matrices; i++) {
+	nanolapack::inverse(a.data<float>() + N * N * i, N, inv.data<float>() + N * N * i);
+  }
+#endif
 }
 
 void Inverse::eval(const std::vector<array>& inputs, array& output) {
