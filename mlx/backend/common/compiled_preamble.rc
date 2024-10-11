@@ -1,0 +1,5 @@
+#include <windows.h>
+
+#define CODE_ID 21264
+
+CODE_ID RCDATA "compiled_preamble.inc"

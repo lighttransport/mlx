@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 
+if (MSVC)
+project(mlx LANGUAGES C CXX RC)
+else()
 project(mlx LANGUAGES C CXX)
+endif()
 
 # ----------------------------- Setup -----------------------------
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
