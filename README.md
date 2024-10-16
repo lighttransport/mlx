@@ -5,22 +5,24 @@ We don't need the following feature, so dsiabled.
 * Disable Lapack and BLAS.
   * Use nanocblas/nanolapack by default.
 * Make MPI optional
+* Disable GGUF and SAFETENSORS support by default.
+* Support Windows(MSVC).
 
 ## TODO
 
 * [ ] Use Win32 mmap API on Windows(MSVC)
 * [ ] Use Win32 dlopen API on Windows(MSVC)
-* [ ] Generate preamble code on Windows(MSVC)
+* [x] Generate preamble code on Windows(MSVC)
 
 ## Note on Win32 build
 
-Win32 build passes, but may not work yet. 
+Win32 build passes, but may not work yet.
 
 # MLX
 
 [**Quickstart**](#quickstart) | [**Installation**](#installation) |
 [**Documentation**](https://ml-explore.github.io/mlx/build/html/index.html) |
-[**Examples**](#examples) 
+[**Examples**](#examples)
 
 [![CircleCI](https://circleci.com/gh/ml-explore/mlx.svg?style=svg)](https://circleci.com/gh/ml-explore/mlx)
 
@@ -59,7 +61,7 @@ MLX is designed by machine learning researchers for machine learning
 researchers. The framework is intended to be user-friendly, but still efficient
 to train and deploy models. The design of the framework itself is also
 conceptually simple. We intend to make it easy for researchers to extend and
-improve MLX with the goal of quickly exploring new ideas. 
+improve MLX with the goal of quickly exploring new ideas.
 
 The design of MLX is inspired by frameworks like
 [NumPy](https://numpy.org/doc/stable/index.html),
@@ -104,7 +106,7 @@ Checkout the
 [documentation](https://ml-explore.github.io/mlx/build/html/install.html#)
 for more information on building the C++ and Python APIs from source.
 
-## Contributing 
+## Contributing
 
 Check out the [contribution guidelines](https://github.com/ml-explore/mlx/tree/main/CONTRIBUTING.md) for more information
 on contributing to MLX. See the
