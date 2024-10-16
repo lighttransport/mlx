@@ -281,9 +281,6 @@ inline void build_kernel(
 void Compiled::eval_cpu(
     const std::vector<array>& inputs,
     std::vector<array>& outputs) {
-#ifdef WIN32
-  throw std::runtime_error("[Compiled:eval_cpu] TODO");
-#else
   if (kernel_lib_.empty()) {
     kernel_lib_ = build_lib_name(inputs_, outputs_, tape_, constant_ids_);
   }
@@ -376,7 +373,6 @@ void Compiled::eval_cpu(
   }
   auto fun = (void (*)(void**))fn_ptr;
   fun(args.data());
-#endif
 }
 
 } // namespace mlx::core

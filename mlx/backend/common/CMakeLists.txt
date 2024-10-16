@@ -5,14 +5,14 @@ else()
   set(COMPILER ${CMAKE_CXX_COMPILER})
 endif()
 
-if (WIN32)
-# TODO
+if (MSVC)
+# TODO: write .inc to binary directory and set its include path to RC.
 add_custom_command(
-  OUTPUT compiled_preamble.cpp
+  OUTPUT compiled_preamble.inc
   COMMAND
     ${CMAKE_CURRENT_SOURCE_DIR}/make_compiled_preamble.bat
-    ${CMAKE_CURRENT_BINARY_DIR}/compiled_preamble.cpp ${COMPILER}
-    ${PROJECT_SOURCE_DIR} ${CLANG}
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiled_preamble.inc ${COMPILER}
+    ${PROJECT_SOURCE_DIR}
   DEPENDS make_compiled_preamble.bat
           compiled_preamble.h
           ${PROJECT_SOURCE_DIR}/mlx/types/half_types.h
@@ -20,6 +20,7 @@ add_custom_command(
           ${PROJECT_SOURCE_DIR}/mlx/types/bf16.h
           ${PROJECT_SOURCE_DIR}/mlx/types/complex.h
           ops.h)
+add_custom_target(cpu_compiled_preamble DEPENDS compiled_preamble.inc)
 else()
 add_custom_command(
   OUTPUT compiled_preamble.cpp
@@ -34,11 +35,10 @@ add_custom_command(
           ${PROJECT_SOURCE_DIR}/mlx/types/bf16.h
           ${PROJECT_SOURCE_DIR}/mlx/types/complex.h
           ops.h)
-
 add_custom_target(cpu_compiled_preamble DEPENDS compiled_preamble.cpp)
-
-add_dependencies(mlx cpu_compiled_preamble)
 endif()
+add_dependencies(mlx cpu_compiled_preamble)
+
 
 target_sources(
   mlx
@@ -71,7 +71,13 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
           )
 
-if (WIN32)
+if (MSVC)
+target_sources(
+  mlx
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/compiled_preamble.rc
+  ${CMAKE_CURRENT_SOURCE_DIR}/compiled_preamble_msvc.cpp
+)
 else()
 target_sources(
   mlx
